@@ -1,0 +1,55 @@
+Cowork Local Viewer — glisser-déposer (lecture seule, 100 % local)
+==================================================================
+
+Pourquoi un serveur ? Chrome refuse de lire un DOSSIER déposé sur une page ouverte
+en double-clic (file://). Servie en http://localhost, la même page l'accepte.
+Le serveur ne fait que servir la page : il ne lit pas tes sessions, ne liste rien,
+n'écrit rien, n'écoute que sur 127.0.0.1 (ton Mac uniquement).
+
+Lancer (une fois par utilisation) :
+  1. Ouvre Terminal.
+  2. Tape  cd  suivi d'un espace, glisse ce dossier dans la fenêtre Terminal, Entrée.
+  3. Tape  node server.js  puis Entrée.  → le navigateur s'ouvre sur http://127.0.0.1:4747
+
+Utiliser :
+  Dans le Finder, sélectionne le dossier local_…  ET  son local_….json, glisse les deux
+  n'importe où sur la page. La session apparaît avec son titre ; clique-la.
+  Tu peux déposer plusieurs sessions à la fois.
+
+Arrêter : Ctrl+C dans Terminal.
+
+PROJETS ET INDEX (nouveau)
+--------------------------
+1. Dépose spaces.json (il est dans ~/Library/Application Support/Claude/spaces.json) :
+   la page connaît alors le nom de chaque projet et son dossier. Tu peux aussi déposer
+   remote-sessions-spaces.json (sessions cloud -> projet).
+2. Pour un INDEX de toutes tes sessions sans déposer 30 000 fichiers :
+   dans le Finder, ouvre le dossier des sessions, tape « .json » dans le champ de recherche
+   (limité à ce dossier), Cmd+A, et glisse la sélection dans la page.
+   Ces fichiers ne contiennent que titre + dates + dossier du projet : aucune conversation n'est lue.
+3. Clique « Construire l'index (.csv + .md) » : tu obtiens la liste id <-> titre <-> projet <-> dates.
+4. Le menu « Tous les projets » filtre la liste (ex. Euterpe). Pour exporter les conversations
+   d'un projet, dépose ensuite les dossiers local_… correspondants (leurs identifiants sont dans l'index) :
+   les dépôts s'additionnent, puis ZIP session par session.
+Pastille verte = projet lu dans le local_….json ; pastille orange « (déduit) » = trouvé en cherchant
+le chemin du projet dans l'audit (quand le .json manque).
+
+FUSEAU HORAIRE
+--------------
+Les fichiers Cowork ne stockent que l'instant UTC : le lieu où tu étais n'est pas enregistré.
+Le menu « Fuseau » (barre du haut) choisit le fuseau d'affichage de la session ouverte (heures, jours,
+exports .md et ZIP). Défaut : America/Toronto. Le choix est mémorisé par session dans le navigateur ;
+« Par défaut » applique le fuseau choisi à toutes les sessions sans choix mémorisé.
+Le fuseau utilisé est écrit dans transcript.md, manifest.json et session-local.json de chaque ZIP.
+
+RELIRE UNE ARCHIVE
+------------------
+Dépose un ZIP téléchargé (ou son dossier décompressé) dans la page : la session réapparaît avec
+son titre, son projet et son fuseau, même vue (lecture / technique), filtre par jour, ré-export.
+
+ZIP « The requested file could not be read »
+-------------------------------------------
+Chrome invalide une référence à un fichier déposé si ce fichier change sur le disque après le dépôt
+(session encore ouverte dans Cowork, fichier iCloud, etc.). La page lit maintenant les pièces dès
+l'ouverture de la session et garde une copie en mémoire ; si un fichier reste illisible, le ZIP est
+quand même créé et la liste est dans FICHIERS-NON-LUS.txt.

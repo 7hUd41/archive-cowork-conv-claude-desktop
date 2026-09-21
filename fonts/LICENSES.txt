@@ -1,0 +1,5 @@
+Fira Code — Copyright (c) 2014, The Fira Code Project Authors (https://github.com/tonsky/FiraCode)
+Distribuée sous SIL Open Font License 1.1 : https://github.com/tonsky/FiraCode/blob/master/LICENSE
+
+Libertinus Serif — Copyright (c) 2012-2024, The Libertinus Project Authors (https://github.com/alerque/libertinus)
+Distribuée sous SIL Open Font License 1.1 : voir OFL.txt

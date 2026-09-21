@@ -1,0 +1,129 @@
+/* Cowork Session Archiver — styles de l'aperçu, partagés entre l'onglet de l'extension et transcript.html */
+:root { --accent: #c96442; --bg: #f3efe7; --paper: #fff; --ink: #1f1f1f; --muted: #6b6b6b; --line: #e3dfd7; --user: #dff3d3; --cream: #fbf6ea; }
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { font-family: "Styrene A", -apple-system, BlinkMacSystemFont, "Inter", "Helvetica Neue", "Segoe UI", sans-serif; margin: 0; color: var(--ink); background: var(--bg); }
+.wrap { max-width: 860px; margin: 0 auto; }
+code { font-size: 12px; background: #ebe7df; padding: 1px 4px; border-radius: 3px; }
+
+/* Barre du transcript autonome */
+.tbar { position: sticky; top: 0; z-index: 5; background: rgba(243,239,231,.96); backdrop-filter: blur(6px); border-bottom: 1px solid var(--line); padding: 10px 24px; }
+.tbar .wrap { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; font-size: 13px; }
+.tbar h1 { font-size: 15px; margin: 0; }
+.tbar .grow { flex: 1; }
+.btn { padding: 6px 12px; font-size: 12.5px; font-weight: 600; border: 1px solid var(--line); border-radius: 8px; background: #fff; color: var(--ink); cursor: pointer; }
+.btn.on { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+/* Résumé */
+#summary { margin: 18px auto 0; background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px; font-size: 13px; display: none; }
+#summary dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; margin: 0; }
+#summary dt { color: var(--muted); } #summary dd { margin: 0; }
+
+/* Fil de conversation */
+#conv { max-width: 860px; margin: 18px auto 60px; padding: 0 24px; display: flex; flex-direction: column; gap: 14px; }
+.day { align-self: center; font-size: 12px; color: var(--muted); background: #ebe7df; padding: 3px 10px; border-radius: 10px; margin: 12px 0 2px; }
+.who { font-size: 11.5px; color: var(--muted); margin-bottom: 6px; display: flex; gap: 6px; flex-wrap: wrap; align-items: baseline; font-family: "Styrene A", -apple-system, BlinkMacSystemFont, "Inter", "Helvetica Neue", "Segoe UI", sans-serif; }
+.who b { color: var(--ink); font-weight: 600; }
+.tech { color: #9a948a; }
+
+/* Vous : colonne à droite, cartes de pièces jointes, bulle verte avec en-tête */
+.ucol { align-self: flex-end; max-width: 78%; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+.msg.user { background: var(--user); border: 1px solid #cfe6c2; border-radius: 16px; border-bottom-right-radius: 4px; padding: 10px 14px; font-size: 15px; line-height: 1.5; }
+.attcard { background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 10px; }
+.attcard img.att { display: block; max-width: 320px; max-height: 360px; border-radius: 8px; cursor: zoom-in; }
+.attmeta { font-size: 11px; color: var(--muted); margin-top: 6px; }
+.attcard.file { width: 260px; min-height: 120px; display: flex; flex-direction: column; }
+.attcard.file .fname { font-size: 14px; margin-top: 2px; }
+.badge { align-self: flex-start; font-size: 11px; font-weight: 600; background: #ebe7df; color: #444; padding: 2px 8px; border-radius: 6px; margin-top: auto; padding-top: 3px; }
+.attcard.file .badge { margin-top: 18px; }
+
+/* Code : Fira Code avec ligatures */
+@font-face { font-family: "Fira Code"; src: url("fonts/FiraCode-Regular.woff2") format("woff2"); font-weight: 400; font-style: normal; }
+@font-face { font-family: "Fira Code"; src: url("fonts/FiraCode-Bold.woff2") format("woff2"); font-weight: 700; font-style: normal; }
+.mono, code, pre, .ttime { font-family: "Fira Code", ui-monospace, Menlo, monospace; font-variant-ligatures: contextual; font-feature-settings: "calt" 1, "liga" 1; }
+
+/* Claude : bulle crème, Libertine */
+@font-face { font-family: "Libertinus Serif"; src: url("fonts/LibertinusSerif-Regular.woff2") format("woff2"); font-weight: 400; font-style: normal; }
+@font-face { font-family: "Libertinus Serif"; src: url("fonts/LibertinusSerif-Bold.woff2") format("woff2"); font-weight: 700; font-style: normal; }
+@font-face { font-family: "Libertinus Serif"; src: url("fonts/LibertinusSerif-Italic.woff2") format("woff2"); font-weight: 400; font-style: italic; }
+@font-face { font-family: "Libertinus Serif"; src: url("fonts/LibertinusSerif-BoldItalic.woff2") format("woff2"); font-weight: 700; font-style: italic; }
+.msg.claude { align-self: flex-start; max-width: 92%; font-family: "Linux Libertine O", "Linux Libertine", "Libertinus Serif", "Tiempos Text", Charter, Georgia, serif; font-size: 17px; line-height: 1.55; color: #2b2a27; padding: 12px 16px; background: var(--cream); border: 1px solid #ede4cf; border-radius: 16px; border-bottom-left-radius: 4px; box-shadow: 0 1px 1px rgba(0,0,0,.03); }
+.msg .body p { margin: 0 0 10px; } .msg .body p:last-child { margin-bottom: 0; }
+.msg .body h3, .msg .body h4 { margin: 12px 0 6px; font-size: 1em; } .msg .body h3 { font-size: 1.06em; }
+.msg .body ul, .msg .body ol { margin: 4px 0 10px; padding-left: 22px; }
+.msg .body pre { background: #f4f1ea; border-radius: 6px; padding: 8px 10px; overflow-x: auto; font-size: 12.5px; line-height: 1.5; }
+.msg .body code { font-size: 13px; }
+.msg .body hr { border: 0; border-top: 1px solid var(--line); margin: 8px 0; }
+.chip { display: inline-block; font-size: 12px; background: #f4f1ea; border: 1px solid var(--line); border-radius: 8px; padding: 3px 8px; margin: 4px 4px 0 0; }
+
+/* Activité : bloc repliable, en-tête résumé, frise verticale */
+.activity { align-self: flex-start; max-width: 100%; width: 100%; padding: 2px 0 2px 2px; }
+.activity > summary.ahead { font-size: 14px; color: var(--muted); margin-bottom: 6px; cursor: pointer; list-style: none; display: flex; align-items: center; gap: 8px; }
+.activity > summary.ahead::-webkit-details-marker { display: none; }
+.activity > summary.ahead::before { content: "▸"; font-size: 11px; color: #b0a999; transition: transform .15s; }
+.activity[open] > summary.ahead::before { transform: rotate(90deg); }
+.activity > summary.ahead .count { font-size: 11.5px; color: #9a948a; }
+.timeline { position: relative; display: flex; flex-direction: column; }
+.timeline::before { content: ""; position: absolute; left: 11px; top: 14px; bottom: 14px; width: 1px; background: #d8d2c6; }
+.titem { position: relative; }
+.titem summary { list-style: none; cursor: pointer; display: flex; align-items: baseline; gap: 10px; padding: 6px 0; font-size: 14px; color: #555; }
+.titem summary::-webkit-details-marker { display: none; }
+.titem summary:hover { color: var(--ink); }
+.ticon { display: inline-flex; width: 22px; height: 22px; align-items: center; justify-content: center; background: var(--bg); position: relative; z-index: 1; font-size: 14px; }
+.tlabel b { font-weight: 600; color: #444; }
+.ttime { margin-left: auto; font-size: 11.5px; color: var(--muted); white-space: nowrap; }
+.tbody { margin: 2px 0 8px 32px; font-size: 12.5px; }
+.tbody .rlabel, .result .rlabel { display: block; font-size: 11px; color: var(--muted); margin: 6px 0 2px; }
+.tbody pre, .result pre { white-space: pre-wrap; word-break: break-word; font-size: 11.5px; background: #f4f1ea; border-radius: 6px; padding: 6px 8px; margin: 0; max-height: 260px; overflow: auto; }
+.result { border-left: 2px solid #8fc48f; padding-left: 8px; margin-top: 6px; }
+.result.error { border-left-color: #d67f7a; }
+.afiles { display: flex; flex-direction: column; gap: 8px; margin-top: 6px; }
+
+/* Carte de fichier façon Claude */
+.filecard { display: flex; align-items: center; gap: 16px; background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; margin-top: 14px; font-family: -apple-system, BlinkMacSystemFont, "Inter", "Helvetica Neue", "Segoe UI", sans-serif; }
+.msg.claude .filecard { margin: 14px 0 2px; }
+.ficon { position: relative; width: 48px; height: 58px; flex: none; }
+.fpage { position: absolute; left: 4px; top: 4px; width: 38px; height: 50px; background: #fdfcfa; border: 1px solid #d9d4ca; border-radius: 5px; transform: rotate(-4deg); }
+.fpage::after { content: ""; position: absolute; left: 10px; right: 10px; top: 14px; height: 2px; background: #cfc9be; box-shadow: 0 8px 0 #cfc9be, 0 16px 0 #cfc9be; }
+.fpage.back { z-index: -1; transform: rotate(4deg); left: 8px; top: 2px; background: #f4f1ea; }
+.fname { font-weight: 500; font-size: 15px; color: var(--ink); }
+.fkind { font-size: 13px; color: var(--muted); margin-top: 2px; }
+.fmeta { font-size: 11px; color: #9a948a; margin-top: 4px; }
+
+.agent { border-left: 3px solid #b9a98c; padding-left: 12px; margin-top: 8px; display: flex; flex-direction: column; gap: 10px; }
+.agent > .label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+.orphan { font-size: 12px; color: var(--muted); }
+.turn { align-self: center; font-size: 11.5px; color: var(--muted); margin: 4px 0; }
+.sys { align-self: center; font-size: 11px; color: #9a948a; font-style: italic; }
+body:not(.show-tech) .sys { display: none; }
+
+/* Résumé de compaction : repère distinct, jamais confondu avec un message */
+.compact-summary { align-self: stretch; width: 100%; background: #fff3e6; border: 1px solid #e7c9a3; border-left: 4px solid var(--accent); border-radius: 12px; padding: 4px 14px; }
+.compact-summary > summary { cursor: pointer; list-style: none; padding: 8px 0; display: flex; gap: 8px; flex-wrap: wrap; align-items: baseline; }
+.compact-summary > summary::-webkit-details-marker { display: none; }
+.compact-summary > summary::before { content: "▸"; color: var(--accent); }
+.compact-summary[open] > summary::before { content: "▾"; }
+.cs-badge { font-weight: 700; color: #9a4a2c; font-size: 13px; }
+.cs-note { font-size: 11.5px; color: #a9744f; }
+.compact-summary .body { font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif; font-size: 13.5px; color: #4a4a46; padding-bottom: 10px; }
+
+/* Mode lecture : on masque les métadonnées techniques (rien n'est retiré du document) */
+body.mode-hr .tech { display: none; }
+body.mode-hr .turn { display: none; }
+.d-short { display: none; }
+body.mode-hr .d-full { display: none; }
+body.mode-hr .d-short { display: inline; cursor: help; position: relative; }
+.d-short[data-tip]:hover::after { content: attr(data-tip); position: absolute; left: 0; top: 100%; margin-top: 4px; background: #2b2a27; color: #fff; font-size: 11px; font-weight: 400; padding: 4px 8px; border-radius: 6px; white-space: nowrap; z-index: 20; pointer-events: none; font-family: -apple-system, BlinkMacSystemFont, "Inter", "Helvetica Neue", "Segoe UI", sans-serif; }
+.attrow { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+body.mode-hr .attrow { flex-direction: row; flex-wrap: wrap; justify-content: flex-end; align-items: flex-start; }
+body.mode-hr .attrow .attcard img.att { max-width: 200px; max-height: 240px; }
+body.mode-hr .attrow .attcard.file { width: 200px; min-height: 100px; }
+body.mode-hr .attrow .attmeta { max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+body.mode-hr .fmeta { display: none; }
+body.mode-hr .attmeta .tech { display: none; }
+
+/* Visionneuse d'images */
+#lightbox { position: fixed; inset: 0; background: rgba(20,18,15,.92); display: none; align-items: center; justify-content: center; z-index: 50; cursor: zoom-out; padding: 24px; }
+#lightbox.open { display: flex; }
+#lightbox img { max-width: 96vw; max-height: 92vh; border-radius: 6px; box-shadow: 0 10px 40px rgba(0,0,0,.5); background: #fff; }
+#lightbox .cap { position: absolute; bottom: 14px; left: 0; right: 0; text-align: center; color: #ddd; font-size: 12px; }
