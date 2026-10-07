@@ -1,60 +1,80 @@
 #!/usr/bin/env python3
-# Génère cowork-local-viewer.html : une page autonome (hors ligne) qui réutilise le moteur de l'extension
-# pour afficher/exporter des sessions Cowork LOCALES déposées par glisser-déposer.
-import base64, re, os, sys
+# Cowork Local Viewer — build.py
+# authors: 7hud41
+# license: MIT
+#
+# Generates a single self-contained index.html (fonts, JSZip, engine and loader inlined) that works offline.
+#
+#   python3 build.py                 -> index.html (local sessions + projects + index + archives)
+#   python3 build.py --mode archive  -> index.html (archive reader only)
+#   python3 build.py -o out.html     -> custom output path
+import argparse, base64, json, os
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
-OUT = sys.argv[1] if len(sys.argv) > 1 else os.path.join(ROOT, "index.html")
+ENGINE = os.path.join(ROOT, "engine")
+SRC = os.path.join(ROOT, "src")
 
-def read(p): return open(os.path.join(ROOT, p), encoding="utf-8").read()
-def b64(p): return base64.b64encode(open(os.path.join(ROOT, p), "rb").read()).decode()
+ap = argparse.ArgumentParser()
+ap.add_argument("--mode", choices=["local", "archive"], default="local")
+ap.add_argument("-o", "--out", default=os.path.join(ROOT, "index.html"))
+args = ap.parse_args()
+MODE = args.mode
+
+def read(p): return open(p, encoding="utf-8").read()
+def b64(p): return base64.b64encode(open(p, "rb").read()).decode()
 
 FONTS = ["LibertinusSerif-Regular", "LibertinusSerif-Bold", "LibertinusSerif-Italic", "LibertinusSerif-BoldItalic", "FiraCode-Regular", "FiraCode-Bold"]
 
-viewer_css = read("viewer.css")
-viewer_js = read("viewer.js")
-jszip = read("jszip.min.js")
-archive = read("archive.js")
+viewer_css = read(os.path.join(ENGINE, "viewer.css"))
+viewer_js = read(os.path.join(ENGINE, "viewer.js"))
+i18n_js = read(os.path.join(ENGINE, "i18n.js"))
+jszip = read(os.path.join(ENGINE, "jszip.min.js"))
+engine = read(os.path.join(ENGINE, "archive.js"))
+loader = read(os.path.join(SRC, "loader.js"))
 
-# 1) CSS avec polices intégrées
+# 1) CSS with embedded fonts
 css_inline = viewer_css
 for f in FONTS:
-    css_inline = css_inline.replace(f'url("fonts/{f}.woff2")', f'url("data:font/woff2;base64,{b64("fonts/"+f+".woff2")}")')
+    css_inline = css_inline.replace(f'url("fonts/{f}.woff2")', f'url("data:font/woff2;base64,{b64(os.path.join(ENGINE, "fonts", f + ".woff2"))}")')
 
-# 2) archive.js : retirer l'init spécifique à l'extension (DOMContentLoaded), garder tout le moteur
-i = archive.index("document.addEventListener('DOMContentLoaded'")
-engine = archive[:i]
-# hook : fichiers locaux ajoutés au ZIP avant le manifeste
-engine = engine.replace("    zip.file('manifest.json', JSON.stringify(manifest, null, 2));",
-                        "    if (window.LOCAL_EXTRA) await window.LOCAL_EXTRA(zip);\n    zip.file('manifest.json', JSON.stringify(manifest, null, 2));")
-# coût : les audit.jsonl exposent total_cost_usd au lieu de modelUsage
-engine = engine.replace("const cost = p.modelUsage ? Object.values(p.modelUsage).reduce((s, m) => s + (m.costUSD || 0), 0) : null;",
-                        "const cost = p.modelUsage ? Object.values(p.modelUsage).reduce((s, m) => s + (m.costUSD || 0), 0) : (typeof p.total_cost_usd === 'number' ? p.total_cost_usd : null);")
-assert "LOCAL_EXTRA" in engine
-
-# 3) ressources servies via un faux chrome.runtime.getURL (data: URLs) pour buildTranscriptHtml
+# 2) resources served through a fake chrome.runtime.getURL (data: URLs) for buildTranscriptHtml
 def data_url(mime, s): return f"data:{mime};base64," + base64.b64encode(s.encode("utf-8")).decode()
-RES = {
-    "viewer.css": data_url("text/css", viewer_css),
-    "viewer.js": data_url("text/javascript", viewer_js),
-}
+RES = {"viewer.css": data_url("text/css", viewer_css), "viewer.js": data_url("text/javascript", viewer_js)}
 for f in FONTS:
-    RES["fonts/" + f + ".woff2"] = "data:font/woff2;base64," + b64("fonts/" + f + ".woff2")
-res_js = "const RES = " + __import__("json").dumps(RES) + ";\nwindow.chrome = { runtime: { getURL: p => RES[p] || p } };"
+    RES["fonts/" + f + ".woff2"] = "data:font/woff2;base64," + b64(os.path.join(ENGINE, "fonts", f + ".woff2"))
+res_js = "const RES = " + json.dumps(RES) + ";\nwindow.chrome = { runtime: { getURL: p => RES[p] || p } };\nwindow.VIEWER_MODE = " + json.dumps(MODE) + ";\nwindow.ARCHIVE_HOST = true;"
 
-loader = read("loader.js")
-
-# Sécurité d'inlining : un "</script>" littéral dans du JS inline fermerait la balise HTML.
-# Dans une chaîne/template JS, "<\/script>" vaut exactement "</script>", donc l'échappement est sans effet sur le code.
+# Inlining safety: a literal "</script>" inside inline JS would close the HTML tag.
+# Inside a JS string/template, "<\/script>" equals "</script>", so the escape does not change the code.
 def safe_inline(js): return js.replace("</script>", "<\\/script>")
-jszip = safe_inline(jszip); viewer_js = safe_inline(viewer_js); engine = safe_inline(engine); loader = safe_inline(loader)
+jszip, viewer_js, i18n_js, engine, loader = map(safe_inline, (jszip, viewer_js, i18n_js, engine, loader))
+
+if MODE == "archive":
+    TITLE = "Cowork Archive Viewer"
+    DROP_BIG = "Drop a downloaded archive here: a <b>ZIP</b> or its unzipped folder (the one containing <b>events.json</b>)"
+    DROP_HOW = '<span data-i18n-html="Same view as when it was exported: reading or full-details mode, day filter, day export, re-export. Drops add up.">Same view as when it was exported: reading or full-details mode, day filter, day export, re-export. Drops add up.</span><br>'
+    EXTRA_CONTROLS = ""
+else:
+    TITLE = "Cowork Local Viewer"
+    DROP_BIG = "Drop a <b>local_…</b> folder and its <b>local_….json</b> here (select both in the Finder, drop them together)"
+    DROP_HOW = (
+        '<span data-i18n-html="You can drop several sessions at once. Dropping works anywhere on the page, and drops add up.">You can drop several sessions at once. Dropping works anywhere on the page, and drops add up.</span><br>'
+        '<span data-i18n-html="<b>Projects:</b> drop <b>spaces.json</b> (in <code>Application Support/Claude/</code>) to see which project each session belongs to."><b>Projects:</b> drop <b>spaces.json</b> (in <code>Application Support/Claude/</code>) to see which project each session belongs to.</span><br>'
+        '<span data-i18n-html="<b>Reopen an archive:</b> drop a downloaded <b>ZIP</b> here (or its unzipped folder): same view, reading/full mode, day filter, re-export."><b>Reopen an archive:</b> drop a downloaded <b>ZIP</b> here (or its unzipped folder): same view, reading/full mode, day filter, re-export.</span><br>'
+        '<span data-i18n-html="<b>Index of all sessions:</b> drop only the <b>local_….json</b> files (in the Finder, type “.json” in the search box of the sessions folder, select all, drop) then “Build the index”."><b>Index of all sessions:</b> drop only the <b>local_….json</b> files (in the Finder, type “.json” in the search box of the sessions folder, select all, drop) then “Build the index”.</span><br>'
+    )
+    EXTRA_CONTROLS = (
+        '<select id="projectSelect" class="ctl" hidden style="max-width:260px;"></select>'
+        '<button id="csvBtn" class="btn" style="text-transform:none;letter-spacing:0;" data-i18n="Build the index (.csv + .md)" data-i18n-title="Downloads a .csv (Numbers/Excel) and a .md: project, title, id, dates, size — for every listed session">Build the index (.csv + .md)</button>'
+    )
 
 html = f"""<!DOCTYPE html>
-<html lang="fr">
+<!-- {TITLE} — generated by build.py · authors: 7hud41 · license: MIT -->
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Cowork Local Viewer — sessions locales (lecture seule)</title>
+<title data-i18n="{TITLE}">{TITLE}</title>
 <style>
 {css_inline}
 header {{ position: sticky; top: 0; z-index: 5; background: rgba(243,239,231,.96); backdrop-filter: blur(6px); border-bottom: 1px solid var(--line); padding: 12px 24px; }}
@@ -68,7 +88,6 @@ button:not(.btn):disabled {{ background: #cfcac2; color: #fff; cursor: default; 
 .bar > div {{ height: 100%; width: 0; background: var(--accent); transition: width .2s; }}
 #log {{ font-family: "Fira Code", ui-monospace, Menlo, monospace; font-size: 11.5px; line-height: 1.5; white-space: pre-wrap; background: var(--paper); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; max-height: 160px; overflow: auto; margin: 16px auto 0; }}
 #log:empty {{ display: none; }}
-/* journal visible dans tous les modes (c'est le seul retour d'information en local) */
 .ok {{ color: #2f7a3e; }} .warn {{ color: #b26b00; }} .err {{ color: #b3261e; }}
 .safe {{ background: #eef6ea; border: 1px solid #cfe6c2; color: #2f5a34; font-size: 12.5px; border-radius: 10px; padding: 8px 12px; margin: 14px auto 0; }}
 .drop {{ margin: 14px auto 0; border: 2px dashed #cbb9aa; border-radius: 14px; background: var(--paper); padding: 26px; text-align: center; color: var(--muted); transition: .15s; }}
@@ -83,7 +102,8 @@ button:not(.btn):disabled {{ background: #cfcac2; color: #fff; cursor: default; 
 .drop .how {{ font-size: 13px; color: var(--muted); margin-top: 12px; line-height: 1.5; }}
 input[type=file] {{ display: none; }}
 #sessionsCard {{ margin: 14px auto 0; background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }}
-#sessionsCard h2 {{ font-size: 12px; margin: 0 0 8px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }}
+#sessionsCard h2 {{ font-size: 12px; margin: 0 0 8px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }}
+#sessionsCard h2 .ctl, #sessionsCard h2 input {{ text-transform: none; letter-spacing: 0; font-weight: 400; }}
 #sessions {{ max-height: 260px; overflow: auto; }}
 .srow {{ padding: 8px 10px; border-radius: 8px; cursor: pointer; }}
 .srow:hover {{ background: #f4f1ea; }}
@@ -93,32 +113,35 @@ input[type=file] {{ display: none; }}
 .srow.noconv .stitle {{ color: #6b665e; font-weight: 500; }}
 .pchip {{ display: inline-block; font-size: 11px; font-weight: 600; letter-spacing: .02em; padding: 1px 8px; border-radius: 999px; background: #e7f0e2; color: #2f5a34; border: 1px solid #cfe6c2; margin-right: 8px; vertical-align: 1px; }}
 .pchip.soft {{ background: #fff3e0; color: #7a5200; border-color: #f0d9a8; }}
-select#daySelect {{ padding: 6px 8px; font-size: 12.5px; border: 1px solid var(--line); border-radius: 8px; max-width: 300px; }}
+.ctl {{ padding: 6px 8px; font-size: 12.5px; border: 1px solid var(--line); border-radius: 8px; background: #fff; }}
+#sessionSearch {{ flex: 1; min-width: 160px; padding: 6px 10px; font-size: 13px; border: 1px solid var(--line); border-radius: 8px; }}
+.lang {{ margin-left: auto; display: inline-flex; gap: 6px; align-items: center; font-size: 12px; color: var(--muted); }}
 </style>
 </head>
 <body class="mode-hr">
 <header>
   <div class="wrap">
-    <h1>Cowork Local Viewer</h1>
-    <div class="sub">Session <code id="sid">— aucune —</code></div>
+    <h1 data-i18n="{TITLE}">{TITLE}</h1>
+    <div class="sub"><span data-i18n="Session">Session</span> <code id="sid">—</code></div>
     <div class="toolbar">
-      <button id="zipBtn" disabled>Télécharger le ZIP</button>
-      <button id="zipDayBtn" disabled title="Un dossier par jour, chacun avec le .md complet du jour et ses images">ZIP par jour</button>
-      <button id="modeBtn" class="btn" data-mode="hr">Mode : lecture</button>
+      <button id="zipBtn" disabled data-i18n="Download ZIP">Download ZIP</button>
+      <button id="zipDayBtn" disabled data-i18n="ZIP by day" data-i18n-title="One folder per day, each with the full .md of that day and its images">ZIP by day</button>
+      <button id="modeBtn" class="btn" data-mode="hr">Mode: reading</button>
       <span id="dayExport" hidden style="display:inline-flex;gap:6px;align-items:center;">
-        <select id="daySelect"></select>
-        <button id="dayBtn" class="btn" disabled>Exporter ce jour (.md)</button>
+        <select id="daySelect" class="ctl" style="max-width:300px;"></select>
+        <button id="dayBtn" class="btn" disabled data-i18n="Export this day (.md)">Export this day (.md)</button>
       </span>
-      <span id="tzWrap" style="display:inline-flex;gap:6px;align-items:center;" title="Les fichiers ne gardent que l'instant UTC, pas le lieu : choisis le fuseau où tu étais pendant cette session. Mémorisé par session.">
-        <label for="tzSelect" style="font-size:12px;color:var(--muted);">Fuseau :</label>
-        <select id="tzSelect" style="padding:6px 8px;font-size:12.5px;border:1px solid var(--line);border-radius:8px;"></select>
-        <button id="tzDefaultBtn" class="btn" title="Utiliser ce fuseau pour toutes les sessions sans choix mémorisé">Par défaut</button>
+      <span id="tzWrap" style="display:inline-flex;gap:6px;align-items:center;" data-i18n-title="Files only keep the UTC instant, not the place: pick the time zone you were in during this session. Remembered per session.">
+        <label for="tzSelect" style="font-size:12px;color:var(--muted);" data-i18n="Time zone:">Time zone:</label>
+        <select id="tzSelect" class="ctl"></select>
+        <button id="tzDefaultBtn" class="btn" data-i18n="Default" data-i18n-title="Use this time zone for every session without a remembered choice">Default</button>
       </span>
+      <span class="lang"><label for="langSelect" data-i18n="Language">Language</label><select id="langSelect" class="ctl"></select></span>
       <div class="opts">
-        <label><input type="checkbox" id="optImages" checked> images envoyées</label>
-        <label><input type="checkbox" id="optWritten" checked> fichiers écrits par Claude</label>
-        <label><input type="checkbox" id="optTranscript" checked> transcript.md + transcript.html</label>
-        <label><input type="checkbox" id="optTech"> afficher les événements techniques</label>
+        <label><input type="checkbox" id="optImages" checked> <span data-i18n="uploaded images">uploaded images</span></label>
+        <label><input type="checkbox" id="optWritten" checked> <span data-i18n="files written by Claude">files written by Claude</span></label>
+        <label><input type="checkbox" id="optTranscript" checked> <span data-i18n="transcript.md + transcript.html">transcript.md + transcript.html</span></label>
+        <label><input type="checkbox" id="optTech"> <span data-i18n="show technical events">show technical events</span></label>
       </div>
     </div>
     <div class="bar"><div id="progress"></div></div>
@@ -126,19 +149,16 @@ select#daySelect {{ padding: 6px 8px; font-size: 12.5px; border: 1px solid var(-
 </header>
 
 <div class="wrap">
-  <div class="safe">🔒 <b>Lecture seule, 100 % local.</b> Cette page tourne hors ligne dans ton navigateur : rien n'est envoyé, rien n'est modifié sur ton Mac. Elle lit ce que tu déposes et te laisse l'afficher et l'exporter.</div>
+  <div class="safe">🔒 <b data-i18n="Read-only, 100% local.">Read-only, 100% local.</b> <span data-i18n="This page runs offline in your browser: nothing is sent anywhere, nothing on your disk is modified. It reads what you drop and lets you view and export it.">This page runs offline in your browser: nothing is sent anywhere, nothing on your disk is modified. It reads what you drop and lets you view and export it.</span></div>
   <div id="drop" class="drop">
-    <div class="big">Glisse ici le dossier <b>local_…</b> et son <b>local_….json</b> (sélectionne les deux dans le Finder, dépose-les ensemble)</div>
-    <div class="how">Tu peux déposer plusieurs sessions à la fois. Le dépôt marche n'importe où sur la page, et les dépôts s'additionnent.<br>
-    <b>Projets :</b> dépose <b>spaces.json</b> (dans <code>Application Support/Claude/</code>) pour voir à quel projet appartient chaque session.<br>
-    <b>Relire une archive :</b> dépose un <b>ZIP</b> téléchargé ici (ou son dossier décompressé) : même vue, mode lecture/technique, filtre par jour, ré-export.<br>
-    <b>Index de toutes les sessions :</b> dépose uniquement les fichiers <b>local_….json</b> (dans le Finder, tape « .json » dans la recherche du dossier des sessions, sélectionne tout, dépose) puis « Construire l'index ».<br>
-    <label class="btn" for="dirInput">…ou choisir un dossier</label>
+    <div class="big" data-i18n-html="{DROP_BIG}">{DROP_BIG}</div>
+    <div class="how">{DROP_HOW}
+    <label class="btn" for="dirInput" data-i18n="…or choose a folder">…or choose a folder</label>
     <input type="file" id="dirInput" webkitdirectory directory multiple></div>
   </div>
   <div id="dropStatus" class="dstatus" hidden></div>
   <div id="sessionsCard" hidden>
-    <h2 style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;"><span>Sessions trouvées — clique pour afficher</span><span id="sessionsCount" style="font-weight:400;text-transform:none;letter-spacing:0;"></span><select id="projectSelect" hidden style="padding:6px 8px;font-size:12.5px;border:1px solid var(--line);border-radius:8px;text-transform:none;letter-spacing:0;font-weight:400;max-width:260px;"></select><input id="sessionSearch" type="search" placeholder="Rechercher un titre…" hidden style="flex:1;min-width:160px;padding:6px 10px;font-size:13px;border:1px solid var(--line);border-radius:8px;text-transform:none;letter-spacing:0;font-weight:400;"><button id="csvBtn" class="btn" style="text-transform:none;letter-spacing:0;" title="Télécharge un .csv (Numbers/Excel) et un .md : projet, titre, identifiant, dates, taille — pour toutes les sessions listées">Construire l'index (.csv + .md)</button></h2>
+    <h2><span data-i18n="Sessions found — click to display">Sessions found — click to display</span><span id="sessionsCount" style="font-weight:400;text-transform:none;letter-spacing:0;"></span>{EXTRA_CONTROLS}<input id="sessionSearch" type="search" placeholder="Search a title…" data-i18n-placeholder="Search a title…" hidden></h2>
     <div id="sessions"></div>
   </div>
   <div id="log"></div>
@@ -148,12 +168,13 @@ select#daySelect {{ padding: 6px 8px; font-size: 12.5px; border: 1px solid var(-
 
 <script>{res_js}</script>
 <script>{jszip}</script>
+<script>{i18n_js}</script>
 <script>{viewer_js}</script>
 <script>{engine}</script>
 <script>{loader}</script>
 </body>
 </html>
 """
-os.makedirs(os.path.dirname(OUT), exist_ok=True)
-open(OUT, "w", encoding="utf-8").write(html)
-print("OK ->", OUT, f"({len(html)/1024/1024:.1f} Mo)")
+os.makedirs(os.path.dirname(os.path.abspath(args.out)), exist_ok=True)
+open(args.out, "w", encoding="utf-8").write(html)
+print("OK ->", args.out, f"({len(html) / 1024 / 1024:.1f} MB, mode={MODE})")

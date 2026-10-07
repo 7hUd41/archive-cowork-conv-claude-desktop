@@ -1,0 +1,16 @@
+{
+  "name": "archive-cowork-conv-claude-desktop",
+  "version": "0.9.2",
+  "description": "Read-only viewer and archiver for local Cowork sessions of the Claude desktop app",
+  "author": "7hud41",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "start": "node server.js",
+    "build": "python3 build.py",
+    "test": "node --test tests/*.test.js"
+  },
+  "devDependencies": {
+    "playwright": "^1.50.0"
+  }
+}

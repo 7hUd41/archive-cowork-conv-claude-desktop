@@ -1,4 +1,7 @@
-/* Cowork Session Archiver — styles de l'aperçu, partagés entre l'onglet de l'extension et transcript.html */
+/* Cowork Session Archiver — viewer.css
+   authors: 7hud41
+   license: MIT
+   Preview styles shared by the extension tab and the standalone transcript.html */
 :root { --accent: #c96442; --bg: #f3efe7; --paper: #fff; --ink: #1f1f1f; --muted: #6b6b6b; --line: #e3dfd7; --user: #dff3d3; --cream: #fbf6ea; }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
@@ -14,7 +17,7 @@ code { font-size: 12px; background: #ebe7df; padding: 1px 4px; border-radius: 3p
 .btn { padding: 6px 12px; font-size: 12.5px; font-weight: 600; border: 1px solid var(--line); border-radius: 8px; background: #fff; color: var(--ink); cursor: pointer; }
 .btn.on { background: var(--accent); color: #fff; border-color: var(--accent); }
 
-/* Résumé */
+/* Summary */
 #summary { margin: 18px auto 0; background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px; font-size: 13px; display: none; }
 #summary dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; margin: 0; }
 #summary dt { color: var(--muted); } #summary dd { margin: 0; }
@@ -26,7 +29,7 @@ code { font-size: 12px; background: #ebe7df; padding: 1px 4px; border-radius: 3p
 .who b { color: var(--ink); font-weight: 600; }
 .tech { color: #9a948a; }
 
-/* Vous : colonne à droite, cartes de pièces jointes, bulle verte avec en-tête */
+/* User: right-aligned column, attachment cards, green bubble with header */
 .ucol { align-self: flex-end; max-width: 78%; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
 .msg.user { background: var(--user); border: 1px solid #cfe6c2; border-radius: 16px; border-bottom-right-radius: 4px; padding: 10px 14px; font-size: 15px; line-height: 1.5; }
 .attcard { background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 10px; }
@@ -42,7 +45,7 @@ code { font-size: 12px; background: #ebe7df; padding: 1px 4px; border-radius: 3p
 @font-face { font-family: "Fira Code"; src: url("fonts/FiraCode-Bold.woff2") format("woff2"); font-weight: 700; font-style: normal; }
 .mono, code, pre, .ttime { font-family: "Fira Code", ui-monospace, Menlo, monospace; font-variant-ligatures: contextual; font-feature-settings: "calt" 1, "liga" 1; }
 
-/* Claude : bulle crème, Libertine */
+/* Claude: cream bubble, Libertinus serif */
 @font-face { font-family: "Libertinus Serif"; src: url("fonts/LibertinusSerif-Regular.woff2") format("woff2"); font-weight: 400; font-style: normal; }
 @font-face { font-family: "Libertinus Serif"; src: url("fonts/LibertinusSerif-Bold.woff2") format("woff2"); font-weight: 700; font-style: normal; }
 @font-face { font-family: "Libertinus Serif"; src: url("fonts/LibertinusSerif-Italic.woff2") format("woff2"); font-weight: 400; font-style: italic; }
@@ -56,7 +59,7 @@ code { font-size: 12px; background: #ebe7df; padding: 1px 4px; border-radius: 3p
 .msg .body hr { border: 0; border-top: 1px solid var(--line); margin: 8px 0; }
 .chip { display: inline-block; font-size: 12px; background: #f4f1ea; border: 1px solid var(--line); border-radius: 8px; padding: 3px 8px; margin: 4px 4px 0 0; }
 
-/* Activité : bloc repliable, en-tête résumé, frise verticale */
+/* Activity: collapsible block, summary header, vertical timeline */
 .activity { align-self: flex-start; max-width: 100%; width: 100%; padding: 2px 0 2px 2px; }
 .activity > summary.ahead { font-size: 14px; color: var(--muted); margin-bottom: 6px; cursor: pointer; list-style: none; display: flex; align-items: center; gap: 8px; }
 .activity > summary.ahead::-webkit-details-marker { display: none; }
@@ -79,7 +82,7 @@ code { font-size: 12px; background: #ebe7df; padding: 1px 4px; border-radius: 3p
 .result.error { border-left-color: #d67f7a; }
 .afiles { display: flex; flex-direction: column; gap: 8px; margin-top: 6px; }
 
-/* Carte de fichier façon Claude */
+/* File card, Claude-style */
 .filecard { display: flex; align-items: center; gap: 16px; background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; margin-top: 14px; font-family: -apple-system, BlinkMacSystemFont, "Inter", "Helvetica Neue", "Segoe UI", sans-serif; }
 .msg.claude .filecard { margin: 14px 0 2px; }
 .ficon { position: relative; width: 48px; height: 58px; flex: none; }
@@ -97,7 +100,7 @@ code { font-size: 12px; background: #ebe7df; padding: 1px 4px; border-radius: 3p
 .sys { align-self: center; font-size: 11px; color: #9a948a; font-style: italic; }
 body:not(.show-tech) .sys { display: none; }
 
-/* Résumé de compaction : repère distinct, jamais confondu avec un message */
+/* Compaction summary: distinct marker, never mistaken for a message */
 .compact-summary { align-self: stretch; width: 100%; background: #fff3e6; border: 1px solid #e7c9a3; border-left: 4px solid var(--accent); border-radius: 12px; padding: 4px 14px; }
 .compact-summary > summary { cursor: pointer; list-style: none; padding: 8px 0; display: flex; gap: 8px; flex-wrap: wrap; align-items: baseline; }
 .compact-summary > summary::-webkit-details-marker { display: none; }
@@ -107,7 +110,7 @@ body:not(.show-tech) .sys { display: none; }
 .cs-note { font-size: 11.5px; color: #a9744f; }
 .compact-summary .body { font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif; font-size: 13.5px; color: #4a4a46; padding-bottom: 10px; }
 
-/* Mode lecture : on masque les métadonnées techniques (rien n'est retiré du document) */
+/* Reading mode: technical metadata is hidden (nothing is removed from the document) */
 body.mode-hr .tech { display: none; }
 body.mode-hr .turn { display: none; }
 .d-short { display: none; }

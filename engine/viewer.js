@@ -1,14 +1,25 @@
 // Cowork Session Archiver — viewer.js
-// Comportements partagés entre l'aperçu de l'extension et transcript.html :
-// visionneuse d'images, mode « infos complètes » / « lecture », affichage des événements techniques.
+// authors: 7hud41
+// license: MIT
+//
+// Behaviours shared by the extension preview and the standalone transcript.html:
+// image lightbox, "full details" / "reading" mode, display of technical events.
 (function () {
+  function modeLabel(hr) {
+    const btn = document.getElementById('modeBtn');
+    const fromData = btn && (hr ? btn.dataset.labelHr : btn.dataset.labelFull);
+    if (fromData) return fromData;
+    if (typeof t === 'function') return hr ? t('Mode: reading') : t('Mode: full details');
+    return hr ? 'Mode: reading' : 'Mode: full details';
+  }
+
   function setMode(mode) {
     const hr = mode === 'hr';
     document.body.classList.toggle('mode-hr', hr);
-    // Blocs d'activité : dépliés en mode complet, repliés en mode lecture (seul l'affichage change)
+    // Activity blocks: expanded in full mode, collapsed in reading mode (display only, nothing is removed)
     document.querySelectorAll('details.activity').forEach(d => { d.open = !hr; });
     const btn = document.getElementById('modeBtn');
-    if (btn) { btn.textContent = hr ? 'Mode : lecture' : 'Mode : infos complètes'; btn.classList.toggle('on', !hr); btn.dataset.mode = mode; }
+    if (btn) { btn.textContent = modeLabel(hr); btn.classList.toggle('on', !hr); btn.dataset.mode = mode; }
     try { localStorage.setItem('csa-mode', mode); } catch (_) {}
   }
 
