@@ -9,6 +9,18 @@ Companion projects:
 - [archive-cowork-conv-claude-web](https://github.com/7hUd41/archive-cowork-conv-claude-web) — the Chrome extension for cloud sessions (`claude.ai/cowork/cse_…`); its engine is vendored here in `engine/`.
 - [archive-cowork-conv-claude-export-viewer](https://github.com/7hUd41/archive-cowork-conv-claude-export-viewer) — a lighter page that only reopens exported ZIPs.
 
+## Screenshots
+
+Sessions dropped on the page, with their project chip (green: declared in `local_….json`; amber: inferred from the audit log), a metadata-only session, the project filter and the index button:
+
+![Session list with projects](docs/sessions.png)
+
+A session opened: time zone selector, summary, then the conversation with the image re-attached from `uploads/`:
+
+![Session opened](docs/session-open.png)
+
+(All screenshots use the synthetic fixtures from `tests/`, not a real conversation.)
+
 ## Where local sessions live
 
 On macOS the Claude desktop app keeps them under
